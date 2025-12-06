@@ -58,7 +58,7 @@ class Trainer(BaseTrainer):
         with torch.autocast(
             self.device, dtype=mixed_precision, enabled=mixed_precision is not torch.float32
         ):
-            batch.update(self.model.forward_discriminator(batch))
+            batch.update(self.model.forward_discriminator(**batch))
             all_losses = self.disc_criterion(**batch)
             batch.update(all_losses)
             if self.is_train:
@@ -76,7 +76,7 @@ class Trainer(BaseTrainer):
         with torch.autocast(
             self.device, dtype=mixed_precision, enabled=mixed_precision is not torch.float32
         ):
-            batch.update(self.model.forward_generator(batch))
+            batch.update(self.model.forward_generator(**batch))
             all_losses = self.gen_criterion(**batch)
             batch.update(all_losses)
             if self.is_train:

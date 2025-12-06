@@ -61,7 +61,7 @@ trainer:
   gradient_accumulation: null
   ts_compile: False # врубает торчскриптовский jit. Не работает с автокастом >:(
   compile: False
-  device_tensors: ["audio"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name
