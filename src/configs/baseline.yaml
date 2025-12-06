@@ -58,9 +58,9 @@ trainer:
   num_samples: 3
   log_step: 500
   n_epochs: 1000
-  epoch_len: null
   gradient_accumulation: null
-  use_jit: False # врубает торчскриптовский jit. Не работает с автокастом >:(
+  ts_compile: False # врубает торчскриптовский jit. Не работает с автокастом >:(
+  compile: False
   device_tensors: ["audio"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
