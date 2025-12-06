@@ -83,8 +83,10 @@ class BaseDataset(Dataset):
             #TODO
             pass
 
+        '''
         if "text" in data_dict:
             data_dict["text_encoded"] = self.encode_text(data_dict["text"])
+        '''
 
         data_dict = self.preprocess_data(data_dict)
 
