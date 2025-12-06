@@ -162,8 +162,6 @@ class MPD(nn.Module):
         return x.view(B, C, -1, period)
 
     def forward(self, x: torch.Tensor, gt: torch.Tensor):
-        gt = gt.unsqueeze(1)
-
         latents_per_period = []
         latents_per_period_gt = []
         for period, discriminator in zip(self.periods, self.discriminators):
@@ -351,6 +349,7 @@ class HifiGAN(nn.Module):
         self.switch_grad_mode(self.mpd, True)
         self.switch_grad_mode(self.msd, True)
 
+        audio = audio.unsqueeze(1)
         generated = self.generator(spectrogram)
         if generated.size(-1) > audio.size(-1):
             generated = generated[..., :audio.size(-1)]
@@ -372,6 +371,7 @@ class HifiGAN(nn.Module):
         self.switch_grad_mode(self.mpd, False)
         self.switch_grad_mode(self.msd, False)
 
+        audio = audio.unsqueeze(1)
         mpd_latent_per_period, mpd_latent_per_period_gt = self.mpd(generated, audio)
         msd_latent_per_period, msd_latent_per_period_gt = self.msd(generated, audio)
 
