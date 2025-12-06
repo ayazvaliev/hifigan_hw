@@ -130,7 +130,8 @@ class BaseTrainer:
         self.metrics = metrics
         self.train_metrics = MetricTracker(
             *self.config.writer.loss_names,
-            "grad_norm",
+            "disc_grad_norm",
+            "gen_grad_norm",
             *[m.name for m in self.metrics["train"]],
             writer=writer,
         )
