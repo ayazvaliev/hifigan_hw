@@ -347,12 +347,9 @@ class HifiGAN(nn.Module):
         for p in module.parameters():
             p.requires_grad = state
     
-    def forward_discriminator(self, audio, **kwargs):
+    def forward_discriminator(self, spectrogram, audio, **kwargs):
         self.switch_grad_mode(self.mpd, True)
         self.switch_grad_mode(self.msd, True)
-
-        with torch.no_grad():
-            spectrogram = self.melspec_transformer(audio)
 
         generated = self.generator(spectrogram)
         if generated.size(-1) > audio.size(-1):
@@ -364,7 +361,6 @@ class HifiGAN(nn.Module):
         msd_latent_per_period, msd_latent_per_period_gt = self.msd(generated.detach(), audio)
 
         return {
-            "spectrogram": spectrogram,
             "generated": generated,
             "mpd_latent_per_period": mpd_latent_per_period,
             "mpd_latent_per_period_gt": mpd_latent_per_period_gt,

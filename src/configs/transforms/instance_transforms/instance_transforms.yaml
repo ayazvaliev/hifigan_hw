@@ -1,2 +1,4 @@
-train: []
-inference: []
+train:
+  get_spectrogram: ${melspec_transformer}
+inference:
+  get_spectrogram: ${melspec_transformer}

@@ -15,14 +15,15 @@ def collate_factory(config):
                 of the tensors.
         """
         # spectrogram [F, T] -> [T, F] -> [N, T, F] -> [N, F, T] NFT :O
-        # audio [C=1, T] -> [N, T]
+        # audio [T] -> [N, T]
         spec_padding = config.melspec_transformer.config.pad_value
         text_padding = None # TODO
-        batch = {
-            "spectrogram": pad_sequence([elem["spectrogram"].transpose(0, 1) for elem in dataset_items], 
-                                        batch_first=True,
-                                        padding_value=spec_padding).transpose(1,2),
-        }
+        batch = {}
+
+        if "spectrogram" in dataset_items[0].keys():
+            batch["spectrogram"] =  pad_sequence([elem["spectrogram"].transpose(0, 1) for elem in dataset_items], 
+                                                  batch_first=True,
+                                                  padding_value=spec_padding).transpose(1,2)
         if "audio" in dataset_items[0].keys():
             batch["audio"] = pad_sequence([elem["audio"] for elem in dataset_items],
                                           batch_first=True)

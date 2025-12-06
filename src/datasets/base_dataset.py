@@ -76,12 +76,12 @@ class BaseDataset(Dataset):
             data_dict["audio"] = self.load_audio(data_dict["audio_path"])
             if "audio" in self.instance_transforms:
                 data_dict["audio"] = self.instance_transforms["audio"](data_dict["audio"]).squeeze(0)
-            if "get_spectrogram" in self.instance_transforms:
-                data_dict["spectrogram"] = self.get_spectrogram(data_dict["audio"])
+                if "get_spectrogram" in self.instance_transforms:
+                    data_dict["spectrogram"] = self.get_spectrogram(data_dict["audio"])
 
         if "spectrogram_path" in data_dict:
             #TODO
-            pass
+            raise NotImplementedError()
 
         '''
         if "text" in data_dict:
