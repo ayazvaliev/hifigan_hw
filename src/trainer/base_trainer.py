@@ -63,7 +63,7 @@ class BaseTrainer:
 
         self.model_ = model
 
-        self.cfg_trainer = self.config.trainers
+        self.cfg_trainer = self.config.trainer
 
         self.device = device
         self.skip_oom = self.cfg_trainer.get("skip_oom", True)
