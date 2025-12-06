@@ -2,10 +2,11 @@ import copy
 import logging
 import random
 
-import numpy as np
 import torch
 import torchaudio
 from torch.utils.data import Dataset
+from random import randint
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,12 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self._assert_index_is_valid(index)
-        self._index = self._filter_records_from_dataset(index, min_audio_length, max_audio_length)
+        # self._index = self._filter_records_from_dataset(index, min_audio_length, max_audio_length)
         self._index = self._shuffle_and_limit_index(index, limit, shuffle_index)
         if sort_index:
             self._index = self._sort_index(self._index)
         self.target_sr = sr
+        self.max_n_samples = None if max_audio_length is None else int(sr * max_audio_length)
 
         self.instance_transforms = instance_transforms or {}
 
@@ -109,6 +111,9 @@ class BaseDataset(Dataset):
         target_sr = self.target_sr
         if sr != target_sr:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
+        if self.max_n_samples is not None and audio_tensor.size(-1) > self.max_n_samples:
+            rand_pos = randint(0, audio_tensor.size(-1) - self.max_n_samples)
+            audio_tensor = audio_tensor[..., rand_pos:rand_pos + self.max_n_samples]
         return audio_tensor
 
     def preprocess_data(self, instance_data):

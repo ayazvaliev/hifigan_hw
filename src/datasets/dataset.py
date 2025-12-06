@@ -128,7 +128,7 @@ class LJSpeechDataset(BaseDataset):
                 "length": audio_info.num_frames / audio_info.sample_rate,
             }
             if metadata_df is not None:
-                data_instance["text"] = normalize_text(metadata_df.loc[metadata_df[0] == item_name, 2].iloc[0])
+                data_instance["text"] = normalize_text(str(metadata_df.loc[metadata_df[0] == item_name, 2].iloc[0]))
             index.append(data_instance)
 
         # write index to disk
