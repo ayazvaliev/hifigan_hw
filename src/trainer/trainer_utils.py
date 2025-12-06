@@ -23,7 +23,7 @@ def get_discriminator_grouped_parameters(model, weight_decay=1e-2):
     no_decay_params = []
 
     for module in ["mpd", "msd"]:
-        for name, param in model.get(module).named_parameters():
+        for name, param in getattr(model, module).named_parameters():
             if not param.requires_grad:
                 continue
             if "bn" in name.lower() or "norm" in name.lower() or "bias" in name.lower():
