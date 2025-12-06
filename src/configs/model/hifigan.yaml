@@ -1,0 +1,10 @@
+_target_: src.model.HifiGAN
+n_bands: ${melspec_transformer.config.n_mels}
+gen_hidden_dim: 256
+gen_proj_kernel_size: 7
+gen_upsample_kernel_sizes: [16, 16, 8]
+mrf_kernel_sizes: [3, 5, 7]
+mrf_dilations: [[1,2], [2,6], [3,12]]
+mpd_periods: [2, 3, 5, 7, 11]
+mpd_num_layers: 4
+negative_slope: 0.1

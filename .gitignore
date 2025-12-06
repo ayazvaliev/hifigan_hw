@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+saved
+outputs
+cometml
+test_*
+
+# Датасет
+ljspeech.zip
+LJSpeech-1.1
+
+#Индексы
+indexes/

@@ -1,0 +1,19 @@
+train:
+  _target_: src.datasets.LJSpeechDataset
+  data_root: ${data_root}
+  index_dir: ${index_dir}
+  name: train
+  train_test_split_ratio: 0.1
+  sr: 22050
+  max_audio_length: 4
+  instance_transforms: ${transforms.instance_transforms.train}
+
+val:
+  _target_: src.datasets.LJSpeechDataset
+  data_root: ${data_root}
+  index_dir: ${index_dir}
+  name: val
+  train_test_split_ratio: ${datasets.train.train_test_split_ratio}
+  sr: 22050
+  max_audio_length: 4
+  instance_transforms: ${transforms.instance_transforms.inference}

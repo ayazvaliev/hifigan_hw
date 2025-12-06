@@ -1,0 +1,11 @@
+train:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 20
+  pin_memory: True
+  persistent_workers: False
+
+inference:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 50
+  pin_memory: True
+  persistent_workers: False
