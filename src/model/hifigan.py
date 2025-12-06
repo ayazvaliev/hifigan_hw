@@ -28,7 +28,7 @@ class MRFBlock(nn.Module):
         self.act = nn.LeakyReLU(negative_slope=negative_slope)
 
     def forward(self, x: torch.Tensor):
-        res = torch.zeros_like(x, requires_grad=True)
+        res = torch.zeros_like(x)
         for block in self.blocks:
             cur_x = x.clone()
             for conv_layer in block:
