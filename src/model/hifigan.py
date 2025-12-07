@@ -159,7 +159,7 @@ class MPD(nn.Module):
         B, C, T = x.shape
         if T % period:
             x = F.pad(x, pad=(0, (T // period + 1) * period - T), mode='reflect')
-        return x.view(B, C, -1, period).contiguous()
+        return x.view(B, C, -1, period)
 
     def forward(self, x: torch.Tensor, gt: torch.Tensor):
         latents_per_period = []
@@ -356,8 +356,8 @@ class HifiGAN(nn.Module):
         elif generated.size(-1) < audio.size(-1):
             audio = audio[..., :generated.size(-1)]
 
-        mpd_latent_per_period, mpd_latent_per_period_gt = self.mpd(generated.detach(), audio)
-        msd_latent_per_period, msd_latent_per_period_gt = self.msd(generated.detach(), audio)
+        mpd_latent_per_period, mpd_latent_per_period_gt = self.mpd(generated.detach().clone(), audio)
+        msd_latent_per_period, msd_latent_per_period_gt = self.msd(generated.detach().clone(), audio)
 
         return {
             "generated": generated,
