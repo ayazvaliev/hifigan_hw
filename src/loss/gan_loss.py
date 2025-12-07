@@ -93,6 +93,6 @@ class HiFiGANGeneratorLoss(nn.Module):
         melspec_loss = self.melspec_loss(generated_spectrogram, spectrogram)
 
         total_gen_loss = mpd_gen_loss + msd_gen_loss + self.feature_loss_coeff * (mpd_feature_loss + msd_features_loss) + self.melspec_loss_coeff * melspec_loss
-        return {"gen_loss": total_gen_loss}
+        return {"gen_loss": total_gen_loss, "melspec_loss": melspec_loss}
 
     

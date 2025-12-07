@@ -13,7 +13,7 @@ from src.metrics.tracker import MetricTracker
 from src.trainer.trainer_utils import (
     get_generator_grouped_parameters,
     get_discriminator_grouped_parameters,
-    has_param
+    has_param,
 )
 from src.utils.io_utils import ROOT_PATH
 
@@ -180,11 +180,15 @@ class BaseTrainer:
         self._initialize_optimizers(optimizer_sd, lr_scheduler_sd)
 
     def _initialize_optimizers(self, optimizer_sd, lr_scheduler_sd):
-        gen_params = get_generator_grouped_parameters(self.model, self.config.gen_optimizer.weight_decay)
-        disc_params = get_discriminator_grouped_parameters(self.model, self.config.disc_optimizer.weight_decay)
+        gen_params = get_generator_grouped_parameters(
+            self.model, self.config.gen_optimizer.weight_decay
+        )
+        disc_params = get_discriminator_grouped_parameters(
+            self.model, self.config.disc_optimizer.weight_decay
+        )
         gen_optimizer_cls = get_class(self.config.gen_optimizer.cls)
         disc_optimizer_cls = get_class(self.config.disc_optimizer.cls)
-        
+
         self.gen_optimizer = gen_optimizer_cls(
             gen_params, **self.project_config["gen_optimizer"]["optimizer_config"]
         )
@@ -206,16 +210,19 @@ class BaseTrainer:
                 total_steps=total_steps,
             )
         else:
-            self.gen_lr_scheduler = instantiate(self.config.lr_scheduler, optimizer=self.gen_optimizer)
-            self.disc_lr_scheduler = instantiate(self.config.lr_scheduler, optimizer=self.disc_optimizer)
-    
+            self.gen_lr_scheduler = instantiate(
+                self.config.lr_scheduler, optimizer=self.gen_optimizer
+            )
+            self.disc_lr_scheduler = instantiate(
+                self.config.lr_scheduler, optimizer=self.disc_optimizer
+            )
+
         if optimizer_sd is not None:
             self.gen_optimizer.load_state_dict(optimizer_sd["gen_optimizer"])
             self.disc_optimizer.load_state_dict(optimizer_sd["disc_optimizer"])
         if lr_scheduler_sd is not None:
             self.gen_lr_scheduler.load_state_dict(lr_scheduler_sd["gen_lr_scheduler"])
             self.disc_lr_scheduler.load_state_dict(lr_scheduler_sd["disc_lr_scheduler"])
-
 
     def train(self):
         """
@@ -318,10 +325,14 @@ class BaseTrainer:
                     sample_rate = self.config.datasets.train.sr
                     self._log_batch(batch_idx, batch, sample_rate, self.cfg_trainer.num_samples)
                 self.logger.debug(
-                    "Train Epoch: {} {} Loss: {:.6f}".format(
-                        epoch, self._progress(batch_idx), batch["loss"].item()
+                    "Train Epoch: {} {} Gen Loss: {:.6f} | Disc Loss: {:.6f}".format(
+                        epoch,
+                        self._progress(batch_idx),
+                        batch["gen_loss"].item(),
+                        batch["disc_loss"].item(),
                     )
                 )
+
                 self._check_model_for_nans()
                 # we don't want to reset train metrics at the start of every epoch
                 # because we are interested in recent train metrics
@@ -382,7 +393,9 @@ class BaseTrainer:
                 self._log_scalars(self.evaluation_metrics)
 
                 sample_rate = self.config.datasets.train.sr
-                self._log_batch(batch_idx, batch, sample_rate, self.cfg_trainer.num_samples, part)  # log only the last batch during inference
+                self._log_batch(
+                    batch_idx, batch, sample_rate, self.cfg_trainer.num_samples, part
+                )  # log only the last batch during inference
 
         return self.evaluation_metrics.result()
 
@@ -730,8 +743,10 @@ class BaseTrainer:
                 self.model = self.model_
 
         # load optimizer state from checkpoint only when optimizer type is not changed.
-        if checkpoint["config"]["gen_optimizer"] != self.config["gen_optimizer"] or \
-           checkpoint["config"]["disc_optimizer"] != self.config["disc_optimizer"]:
+        if (
+            checkpoint["config"]["gen_optimizer"] != self.config["gen_optimizer"]
+            or checkpoint["config"]["disc_optimizer"] != self.config["disc_optimizer"]
+        ):
             self.logger.warning(
                 "Warning: Optimizer or lr_scheduler given in the config file is different "
                 "from that of the checkpoint. Optimizer and scheduler parameters "
@@ -742,11 +757,11 @@ class BaseTrainer:
 
         optimizer_sd = {
             "gen_optimizer": checkpoint["gen_optimizer"],
-            "disc_optimizer": checkpoint["disc_optimizer"]
+            "disc_optimizer": checkpoint["disc_optimizer"],
         }
         lr_scheduler_sd = {
             "gen_lr_scheduler": checkpoint["gen_lr_scheduler"],
-            "disc_lr_scheduler": checkpoint["disc_lr_scheduler"]
+            "disc_lr_scheduler": checkpoint["disc_lr_scheduler"],
         }
         return optimizer_sd, lr_scheduler_sd
 
