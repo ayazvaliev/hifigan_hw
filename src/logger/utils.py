@@ -52,7 +52,6 @@ def plot_spectrogram(spectrogram, name=None, save_on_disk=False):
     Returns:
         image (Image): image of the spectrogram
     """
-    print('input spectrogram shape: ', spectrogram.shape)
     plt.figure(figsize=(20, 5))
     mesh = plt.pcolormesh(spectrogram, shading="auto", cmap="viridis")
     plt.colorbar(mesh)

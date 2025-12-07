@@ -140,8 +140,12 @@ class Trainer(BaseTrainer):
     def log_audio(self, sample_rate, num_samples, **batch):
         real_audio = batch["audio"][0:num_samples].squeeze(1).detach().cpu().numpy()
         generated_audio = batch["generated"][0:num_samples].squeeze(1).detach().cpu().numpy()
-        if np.max(np.abs(generated_audio), dim=-1) > 1:
-            generated_audio /= np.max(np.abs(generated_audio), dim=-1, keepdims=True)
+
+        peak_val = np.max(np.abs(generated_audio), axis=-1)
+        exceeds_peak = peak_val > 1
+        if np.any(exceeds_peak):
+            norm_factor = peak_val[exceeds_peak][:, None]
+            generated_audio[exceeds_peak] = generated_audio[exceeds_peak] / norm_factor
 
         for i, (real_sample, generated_sample) in enumerate(zip(real_audio, generated_audio)):
             self.writer.add_audio(f"real audio {i + 1}", real_sample, sample_rate=sample_rate)
