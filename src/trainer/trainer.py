@@ -39,10 +39,12 @@ class Trainer(BaseTrainer):
             metrics.update(f"grad_norm_{model_name}", self._get_grad_norm(modules))
             optimizer.zero_grad()
 
-            if self.is_train:
+            if self.is_train and model_name == "disc":
                 self.cur_disc_step += 1
             
-            if lr_scheduler is not None and self.cur_disc_step == self.disc_to_gen_update_ratio:
+            if lr_scheduler is not None:
+                if model_name == "disc" and self.cur_disc_step < self.disc_to_gen_update_ratio:
+                    return
                 if self.scheduler_config is None or not self.scheduler_config.update_after_epoch:
                     lr_scheduler.step()
 
