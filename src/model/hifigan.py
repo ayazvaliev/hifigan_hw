@@ -159,7 +159,7 @@ class MPD(nn.Module):
         B, C, T = x.shape
         if T % period:
             x = F.pad(x, pad=(0, (T // period + 1) * period - T), mode='reflect')
-        return x.view(B, C, -1, period)
+        return x.view(B, C, -1, period).contiguous()
 
     def forward(self, x: torch.Tensor, gt: torch.Tensor):
         latents_per_period = []
