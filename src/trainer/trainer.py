@@ -39,7 +39,10 @@ class Trainer(BaseTrainer):
             metrics.update(f"grad_norm_{model_name}", self._get_grad_norm(modules))
             optimizer.zero_grad()
 
-            if lr_scheduler is not None:
+            if self.is_train:
+                self.cur_disc_step += 1
+            
+            if lr_scheduler is not None and self.cur_disc_step == self.disc_to_gen_update_ratio:
                 if self.scheduler_config is None or not self.scheduler_config.update_after_epoch:
                     lr_scheduler.step()
 
@@ -74,23 +77,25 @@ class Trainer(BaseTrainer):
                 self.disc_lr_scheduler
             )
 
-        with torch.autocast(
-            self.device, dtype=mixed_precision, enabled=mixed_precision is not torch.float32
-        ):
-            batch.update(self.model.forward_generator(**batch))
-            all_losses = self.gen_criterion(**batch)
-            batch.update(all_losses)
-            if self.is_train:
-                batch["gen_loss"] /= self.iters_to_accumulate
-        if self.is_train:
-            self.make_opt_step(
-                batch_idx,
-                batch,
-                metrics,
-                "gen_loss",
-                self.gen_optimizer,
-                self.gen_lr_scheduler
-            )
+        with torch.set_grad_enabled(self.cur_disc_step == self.disc_to_gen_update_ratio):
+            with torch.autocast(
+                self.device, dtype=mixed_precision, enabled=mixed_precision is not torch.float32
+            ):
+                batch.update(self.model.forward_generator(**batch))
+                all_losses = self.gen_criterion(**batch)
+                batch.update(all_losses)
+                if self.is_train:
+                    batch["gen_loss"] /= self.iters_to_accumulate
+            if self.is_train and self.cur_disc_step == self.disc_to_gen_update_ratio:
+                self.cur_disc_step = 0
+                self.make_opt_step(
+                    batch_idx,
+                    batch,
+                    metrics,
+                    "gen_loss",
+                    self.gen_optimizer,
+                    self.gen_lr_scheduler
+                )
 
         # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:

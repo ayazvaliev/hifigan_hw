@@ -58,6 +58,7 @@ disc_loss_function:
 
 trainer:
   num_samples: 3
+  disc_to_gen_update_ratio: 3
   log_step: 500
   n_epochs: 1000
   gradient_accumulation: null

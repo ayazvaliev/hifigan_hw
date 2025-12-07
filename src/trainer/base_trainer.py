@@ -179,6 +179,9 @@ class BaseTrainer:
         self.scheduler_config = self.config.get("scheduler_config", None)
         self._initialize_optimizers(optimizer_sd, lr_scheduler_sd)
 
+        self.disc_to_gen_update_ratio = self.cfg_trainer.get("disc_to_gen_update_ratio", 1)
+        self.cur_disc_step = 0
+
     def _initialize_optimizers(self, optimizer_sd, lr_scheduler_sd):
         gen_params = get_generator_grouped_parameters(
             self.model, self.config.gen_optimizer.weight_decay
