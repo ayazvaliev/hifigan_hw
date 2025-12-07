@@ -32,8 +32,8 @@ class MRFBlock(nn.Module):
         for block in self.blocks:
             cur_x = x.clone()
             for conv_layer in block:
-                cur_x += conv_layer(self.act(cur_x))
-            res += cur_x
+                cur_x = cur_x + conv_layer(self.act(cur_x))
+            res = res + cur_x
         return res / len(self.blocks)
 
 
@@ -356,8 +356,8 @@ class HifiGAN(nn.Module):
         elif generated.size(-1) < audio.size(-1):
             audio = audio[..., :generated.size(-1)]
 
-        mpd_latent_per_period, mpd_latent_per_period_gt = self.mpd(generated.detach().clone(), audio)
-        msd_latent_per_period, msd_latent_per_period_gt = self.msd(generated.detach().clone(), audio)
+        mpd_latent_per_period, mpd_latent_per_period_gt = self.mpd(generated.detach(), audio)
+        msd_latent_per_period, msd_latent_per_period_gt = self.msd(generated.detach(), audio)
 
         return {
             "generated": generated,
