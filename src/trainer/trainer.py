@@ -22,6 +22,8 @@ class Trainer(BaseTrainer):
         if ((batch_idx + 1) % self.iters_to_accumulate == 0) or (
             (batch_idx + 1) == self.epoch_len
         ):
+            optimizer.zero_grad()
+
             model_name = loss_name.split("_")[0]
             if model_name == "gen":
                 modules = self.model.generator
@@ -33,8 +35,7 @@ class Trainer(BaseTrainer):
             self.grad_scaler.unscale_(optimizer)
             self._clip_grad_norm(modules)
             self.grad_scaler.step(optimizer)
-            self.grad_scaler.update()
-            optimizer.zero_grad()
+            self.grad_scaler.update() 
 
             metrics.update(f"grad_norm_{model_name}", self._get_grad_norm(modules))
 

@@ -346,8 +346,8 @@ class HifiGAN(nn.Module):
             p.requires_grad = state
     
     def forward_discriminator(self, spectrogram, audio, **kwargs):
-        self.switch_grad_mode(self.mpd, True)
-        self.switch_grad_mode(self.msd, True)
+        # self.switch_grad_mode(self.mpd, True)
+        # self.switch_grad_mode(self.msd, True)
 
         audio = audio.unsqueeze(1)
         generated = self.generator(spectrogram)
@@ -368,8 +368,8 @@ class HifiGAN(nn.Module):
         }
 
     def forward_generator(self, generated, audio, **kwargs):
-        self.switch_grad_mode(self.mpd, False)
-        self.switch_grad_mode(self.msd, False)
+        # self.switch_grad_mode(self.mpd, False)
+        # self.switch_grad_mode(self.msd, False)
 
         audio = audio.unsqueeze(1)
         mpd_latent_per_period, mpd_latent_per_period_gt = self.mpd(generated, audio)
