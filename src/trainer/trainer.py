@@ -130,15 +130,15 @@ class Trainer(BaseTrainer):
             self.log_audio(sample_rate=sample_rate, num_samples=num_samples, **batch)
 
     def log_spectrogram(self, num_samples, **batch):
-        real_spectrogram = batch["spectrogram"][0:num_samples].squeeze(1).detach().cpu()
-        generated_spectrogram = batch["generated_spectrogram"][0:num_samples].squeeze(1).detach().cpu()
+        real_spectrogram = batch["spectrogram"][0:num_samples].detach().cpu()
+        generated_spectrogram = batch["generated_spectrogram"][0:num_samples].detach().cpu()
 
         for i, (real_sample, generated_sample) in enumerate(zip(real_spectrogram, generated_spectrogram)):
             self.writer.add_image(f"real spectrogram {i + 1}", plot_spectrogram(real_sample))
             self.writer.add_image(f"generated spectrogram {i + 1}", plot_spectrogram(generated_sample))
 
     def log_audio(self, sample_rate, num_samples, **batch):
-        real_audio = batch["audio"][0:num_samples].squeeze(1).deatch().cpu().numpy()
+        real_audio = batch["audio"][0:num_samples].squeeze(1).detach().cpu().numpy()
         generated_audio = batch["generated"][0:num_samples].squeeze(1).detach().cpu().numpy()
         if np.max(np.abs(generated_audio), dim=-1) > 1:
             generated_audio /= np.max(np.abs(generated_audio), dim=-1, keepdims=True)
