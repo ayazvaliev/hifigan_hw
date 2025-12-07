@@ -14,6 +14,7 @@ wget
 gdown
 datasets
 yadisk
+torchcodec
 librosa
 
 black
