@@ -122,10 +122,11 @@ class LJSpeechDataset(BaseDataset):
 
         for item in tqdm(audio_path.iterdir()):
             item_name = item.stem
-            audio_info = torchaudio.info(str(item))
+            audio_tensor, sample_rate = torchaudio.load(str(item))
+            num_frames = audio_tensor.size(-1)
             data_instance = {
                 "audio_path": str(item),
-                "length": audio_info.num_frames / audio_info.sample_rate,
+                "length": num_frames / sample_rate,
             }
             if metadata_df is not None:
                 data_instance["text"] = normalize_text(str(metadata_df.loc[metadata_df[0] == item_name, 2].iloc[0]))

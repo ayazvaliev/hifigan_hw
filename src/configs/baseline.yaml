@@ -32,12 +32,14 @@ gen_optimizer:
   weight_decay: 1e-2
   optimizer_config:
     lr: 2e-4
+    betas: [0.8, 0.99]
 
 disc_optimizer:
   cls: torch.optim.AdamW
   weight_decay: 1e-2
   optimizer_config:
     lr: 2e-4
+    betas: [0.8, 0.99]
 
 lr_scheduler:
   _target_: src.lr_scheduler.MultiplicativeLR
@@ -65,7 +67,7 @@ trainer:
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name
-  monitor: "max test_MulticlassAccuracy" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
+  monitor: "off" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
   save_period: 10 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "saved"

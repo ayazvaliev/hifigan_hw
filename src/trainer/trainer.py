@@ -83,15 +83,14 @@ class Trainer(BaseTrainer):
             if self.is_train:
                 batch["gen_loss"] /= self.iters_to_accumulate
         if self.is_train:
-            with torch.autograd.set_detect_anomaly(True):
-                self.make_opt_step(
-                    batch_idx,
-                    batch,
-                    metrics,
-                    "gen_loss",
-                    self.gen_optimizer,
-                    self.gen_lr_scheduler
-                )
+            self.make_opt_step(
+                batch_idx,
+                batch,
+                metrics,
+                "gen_loss",
+                self.gen_optimizer,
+                self.gen_lr_scheduler
+            )
 
         # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:
