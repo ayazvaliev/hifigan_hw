@@ -22,7 +22,6 @@ class Trainer(BaseTrainer):
         if ((batch_idx + 1) % self.iters_to_accumulate == 0) or (
             (batch_idx + 1) == self.epoch_len
         ):
-            optimizer.zero_grad()
 
             model_name = loss_name.split("_")[0]
             if model_name == "gen":
@@ -38,6 +37,7 @@ class Trainer(BaseTrainer):
             self.grad_scaler.update() 
 
             metrics.update(f"grad_norm_{model_name}", self._get_grad_norm(modules))
+            optimizer.zero_grad()
 
             if lr_scheduler is not None:
                 if self.scheduler_config is None or not self.scheduler_config.update_after_epoch:
