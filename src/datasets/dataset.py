@@ -83,6 +83,7 @@ class LJSpeechDataset(BaseDataset):
 
         top_level_dir = ""
         if dataset_url is not None:
+            print(f'Downloading from {dataset_url}')
             if dataset_url.startswith("http"):
                 y = yadisk.YaDisk()
                 meta = y.get_public_meta(dataset_url)

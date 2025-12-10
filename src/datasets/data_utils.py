@@ -72,7 +72,7 @@ def get_dataloaders(config, device, acoustic_model):
     # dataloaders init
     dataloaders = {}
     for dataset_partition in config.datasets.keys():
-        dataset = instantiate(config.datasets.get(dataset_partition), acoustic_model=acoustic_model)
+        dataset = instantiate(config.datasets[dataset_partition], acoustic_model=acoustic_model)
         print(f"Size of {dataset_partition}: {len(dataset)}")
 
         assert dataset_partition == "train" or config.dataloader["inference"].batch_size <= len(
