@@ -27,14 +27,13 @@ def main(config):
     """
     set_random_seed(config.inferencer.seed)
 
-    project_config = OmegaConf.to_container(config, resolve=True)
-
     if config.device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     else:
         device = config.device
 
     if config.get("writer", None) is not None:
+        project_config = OmegaConf.to_container(config, resolve=True, _recursive_=False)
         writer = instantiate(config.writer, project_config)
         melspec_transformer = instantiate(config.melspec_transformer, _recursive_=False).to(device)
     else:
