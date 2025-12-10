@@ -46,7 +46,7 @@ def main(config):
         acoustic_model = FastSpeech2.from_hparams(
             source=config.acoustic_config.model_name,
             savedir=config.acoustic_config.save_dir,
-            run_opts={"device": device}
+            run_opts={"device": "cpu"}
         )
     else:
         acoustic_model = None
