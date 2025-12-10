@@ -68,7 +68,7 @@ def main(config):
         generated = model(melspec_output.to(device)).squeeze(0)
         torchaudio.save(
             str(Path(config.inferencer.save_path) / "generated.wav"),
-            generated,
+            generated.to("cpu"),
             sample_rate=config.inferencer.sr,
             format="wav",
         )
