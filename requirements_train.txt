@@ -18,6 +18,7 @@ torchcodec
 librosa
 speechbrain
 transformers
+pytorch_lightning
 
 black
 isort
