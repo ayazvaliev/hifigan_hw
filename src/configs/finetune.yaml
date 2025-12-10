@@ -1,0 +1,78 @@
+defaults:
+  - model: hifigan
+  - writer: cometml
+  - metrics: mos_metric
+  - datasets: dataset
+  - dataloader: dataloader
+  - transforms: no_transforms
+  - _self_
+
+data_root: "."
+index_dir: "indexes"
+aug_dir: "augs"
+
+melspec_transformer:
+  _target_: src.transforms.LogMelSpecTransform
+  config:
+    _target_: src.transforms.spec_augs.melspec.MelSpectrogramConfig
+    sr: 22050
+    win_length: 1024
+    hop_length: 256
+    n_fft: 1024
+    f_min: 0
+    f_max: 8000
+    n_mels: 80
+    power: 1.0
+    pad_value: -11.5129251
+
+gen_optimizer:
+  cls: torch.optim.AdamW
+  weight_decay: 1e-2
+  optimizer_config:
+    lr: 2e-4
+    betas: [0.8, 0.99]
+
+disc_optimizer:
+  cls: torch.optim.AdamW
+  weight_decay: 1e-2
+  optimizer_config:
+    lr: 2e-4
+    betas: [0.8, 0.99]
+
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  max_lr: 5e-6
+  div_factor: 5
+  pct_start: 0.35
+  final_div_factor: 10
+
+scheduler_config:
+  update_after_epoch: True
+
+gen_loss_function:
+  _target_: src.loss.HiFiGANGeneratorLoss
+  melspec_loss_coeff: 45
+  feature_loss_coeff: 2
+
+disc_loss_function:
+  _target_: src.loss.HiFiGANDiscriminatorLoss
+
+device: auto
+
+trainer:
+  num_samples: 3
+  disc_to_gen_update_ratio: 3
+  log_step: 500
+  n_epochs: 50
+  gradient_accumulation: null
+  ts_compile: False # врубает торчскриптовский jit. Не работает с автокастом >:(
+  compile: False
+  device_tensors: ["audio", "spectrogram"] # which tensors should be on device (ex. GPU)
+  resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
+  from_pretrained: null
+  override: True # if True, will override the previous run with the same name
+  monitor: "off" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
+  save_period: 5 # checkpoint each save_period epochs in addition to the best epoch
+  early_stop: ${trainer.n_epochs} # epochs for early stopping
+  save_dir: "saved"
+  seed: 1
