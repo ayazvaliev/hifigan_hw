@@ -1,13 +1,22 @@
-from wvmos import get_wvmos
+from src.model import Wav2Vec2MOS
 import torch
 import torchaudio
+import os
+import urllib
 from src.metrics.base_metric import BaseMetric
 
+PATH = os.path.join(os.path.expanduser('~'), ".cache/wv_mos/wv_mos.ckpt")
 
 class WMOS(BaseMetric):
     def __init__(self, device, name=None, **kwargs):
         self.cuda_flag = device == "cuda"
-        self.model = get_wvmos(cuda=self.cuda_flag)
+        if not os.path.exists(PATH):
+             os.makedirs(os.path.dirname(PATH), exist_ok=True)
+             urllib.request.urlretrieve(
+                "https://zenodo.org/record/6201162/files/wav2vec2.ckpt?download=1",
+            PATH
+            )
+        self.model = Wav2Vec2MOS(PATH, cuda=self.cuda_flag)
         super().__init__(name=name)
 
     def __call__(self, generated: torch.Tensor, **batch):

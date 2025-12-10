@@ -16,7 +16,7 @@ datasets
 yadisk
 librosa
 speechbrain
-git+https://github.com/AndreevP/wvmos
+transformers
 
 black
 isort
