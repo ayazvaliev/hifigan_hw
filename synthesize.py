@@ -6,12 +6,11 @@ import torch
 import torchaudio
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from speechbrain.inference.TTS import FastSpeech2
 
 from src.datasets.data_utils import get_dataloaders
 from src.trainer import Inferencer
 from src.utils.init_utils import set_random_seed
-from speechbrain.inference.TTS import FastSpeech2
-
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -46,7 +45,7 @@ def main(config):
         acoustic_model = FastSpeech2.from_hparams(
             source=config.acoustic_config.model_name,
             savedir=config.acoustic_config.save_dir,
-            run_opts={"device": "cpu"}
+            run_opts={"device": "cpu"},
         )
     else:
         acoustic_model = None
@@ -56,7 +55,9 @@ def main(config):
     print(model)
 
     if config.prompt is not None:
-        checkpoint = torch.load(config.inferencer.save_path, map_location=device, weights_only=False)
+        checkpoint = torch.load(
+            config.inferencer.save_path, map_location=device, weights_only=False
+        )
         if checkpoint.get("state_dict") is not None:
             sd = checkpoint["state_dict"]
         else:
@@ -65,7 +66,12 @@ def main(config):
 
         melspec_output, _, _, _ = acoustic_model.encode_text([config.prompt])
         generated = model(melspec_output).squeeze(0)
-        torchaudio.save(str(Path(config.inferencer.save_path) / "generated.wav"), generated, sample_rate=config.inferencer.sr, format="wav")
+        torchaudio.save(
+            str(Path(config.inferencer.save_path) / "generated.wav"),
+            generated,
+            sample_rate=config.inferencer.sr,
+            format="wav",
+        )
         return
 
     # setup data_loader instances
@@ -95,7 +101,7 @@ def main(config):
         metrics=metrics,
         skip_model_load=False,
         writer=writer,
-        melspec_transformer=melspec_transformer
+        melspec_transformer=melspec_transformer,
     )
 
     logs = inferencer.run_inference()

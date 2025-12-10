@@ -7,6 +7,7 @@ from tqdm.auto import tqdm
 
 from src.datasets.base_dataset import BaseDataset
 
+
 class CustomDataset(BaseDataset):
     def __init__(
         self,
@@ -23,7 +24,8 @@ class CustomDataset(BaseDataset):
         super().__init__(index, *args, **kwargs)
 
     def _create_index(
-        self, dataset_url: None | str,
+        self,
+        dataset_url: None | str,
     ):
         index = []
 
@@ -46,8 +48,7 @@ class CustomDataset(BaseDataset):
                         name.split("/")[0] for name in zip_ref.namelist() if name.strip()
                     )
                     assert (
-                        len(top_level_dir) == 1
-                        or top_level_dir == "transcriptions"
+                        len(top_level_dir) == 1 or top_level_dir == "transcriptions"
                     ), "Wrong format for inference dir"
                     if top_level_dir != "transcriptions":
                         top_level_dir = top_level_dir.pop()
@@ -61,7 +62,7 @@ class CustomDataset(BaseDataset):
         transcriptions_path = self.data_root / top_level_dir / "transcriptions"
 
         for item in tqdm(transcriptions_path.iterdir()):
-            with open(item, 'r') as txt_f:
+            with open(item, "r") as txt_f:
                 transcription = txt_f.read().rstrip()
             data_instance = {
                 "text": transcription,

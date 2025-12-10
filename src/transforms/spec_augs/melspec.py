@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 
-import torch
-from torch import nn
-
-import torchaudio
-
 import librosa
+import torch
+import torchaudio
+from torch import nn
 
 
 @dataclass
@@ -24,7 +22,6 @@ class MelSpectrogramConfig:
 
 
 class LogMelSpecTransform(nn.Module):
-
     def __init__(self, config: MelSpectrogramConfig):
         super(LogMelSpecTransform, self).__init__()
 
@@ -38,7 +35,7 @@ class LogMelSpecTransform(nn.Module):
             f_min=config.f_min,
             f_max=config.f_max,
             n_mels=config.n_mels,
-            power=config.power
+            power=config.power,
         )
 
         # Default `torchaudio` mel basis uses HTK formula. In order to be compatible with WaveGlow
@@ -48,7 +45,7 @@ class LogMelSpecTransform(nn.Module):
             n_fft=config.n_fft,
             n_mels=config.n_mels,
             fmin=config.f_min,
-            fmax=config.f_max
+            fmax=config.f_max,
         ).T
         self.mel_spectrogram.mel_scale.fb.copy_(torch.tensor(mel_basis))
 
@@ -58,8 +55,6 @@ class LogMelSpecTransform(nn.Module):
         :return: Shape is [B, n_mels, T']
         """
 
-        mel = self.mel_spectrogram(audio) \
-            .clamp_(min=1e-5) \
-            .log_()
+        mel = self.mel_spectrogram(audio).clamp_(min=1e-5).log_()
 
         return mel

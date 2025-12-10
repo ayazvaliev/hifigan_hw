@@ -39,7 +39,9 @@ class VCTKDataset(BaseDataset):
         super().__init__(index, *args, **kwargs)
 
     def _create_index(
-        self, index_path: Path, dataset_url: None | str,
+        self,
+        index_path: Path,
+        dataset_url: None | str,
     ):
         index = []
 
@@ -62,8 +64,7 @@ class VCTKDataset(BaseDataset):
                         name.split("/")[0] for name in zip_ref.namelist() if name.strip()
                     )
                     assert (
-                        len(top_level_dir) == 1
-                        or top_level_dir == "transcriptions"
+                        len(top_level_dir) == 1 or top_level_dir == "transcriptions"
                     ), "Wrong format for inference dir"
                     if top_level_dir != "transcriptions":
                         top_level_dir = top_level_dir.pop()
@@ -80,17 +81,17 @@ class VCTKDataset(BaseDataset):
             voices_path = voices_path / self.speaker_id
         text_path = self.data_root / top_level_dir / "txt"
 
-        for item in tqdm(voices_path.rglob("*.wav")):            
-            speaker_id = str(item.parent).split('/')[-1]
+        for item in tqdm(voices_path.rglob("*.wav")):
+            speaker_id = str(item.parent).split("/")[-1]
             audio_tensor, sample_rate = torchaudio.load(str(item))
             cur_text_path = text_path / speaker_id / (item.stem + ".txt")
-            with open(cur_text_path, 'r') as txt_f:
+            with open(cur_text_path, "r") as txt_f:
                 cur_text = txt_f.read().strip()
             data_instance = {
                 "audio_path": str(item),
                 "length": audio_tensor.size(-1) / sample_rate,
                 "speaker_id": speaker_id,
-                "text": cur_text
+                "text": cur_text,
             }
             index.append(data_instance)
 

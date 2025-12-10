@@ -4,11 +4,11 @@ import hydra
 import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from speechbrain.inference.TTS import FastSpeech2
 
 from src.datasets.data_utils import get_dataloaders
 from src.trainer import Trainer
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
-from speechbrain.inference.TTS import FastSpeech2
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -29,7 +29,9 @@ def main(config):
 
     project_config = OmegaConf.to_container(config, resolve=True)
     logger = setup_saving_and_logging(config)
-    writer = instantiate(config.writer, logger=logger, project_config=project_config, _recursive_=False)
+    writer = instantiate(
+        config.writer, logger=logger, project_config=project_config, _recursive_=False
+    )
 
     if config.device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -40,7 +42,7 @@ def main(config):
         acoustic_model = FastSpeech2.from_hparams(
             source=config.acoustic_config.model_name,
             savedir=config.acoustic_config.save_dir,
-            run_opts={"device": "cpu"}
+            run_opts={"device": "cpu"},
         )
     else:
         acoustic_model = None
@@ -70,7 +72,7 @@ def main(config):
         logger=logger,
         writer=writer,
         batch_transforms=batch_transforms,
-        acoustic_model=acoustic_model
+        acoustic_model=acoustic_model,
     )
 
     trainer.train()

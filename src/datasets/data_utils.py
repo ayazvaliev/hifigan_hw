@@ -7,11 +7,12 @@ from hydra.utils import instantiate
 from src.datasets.collate import collate_factory
 from src.utils.init_utils import set_worker_seed
 
+
 def normalize_text(text: str):
     text = text.lower()
     text = re.sub(r"[^a-z ]", "", text)
     return text.strip()
-    
+
 
 def inf_loop(dataloader):
     """

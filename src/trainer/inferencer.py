@@ -135,12 +135,7 @@ class Inferencer(BaseTrainer):
             batch["generated"] = batch["generated"].cpu()
             for wav, text_id in zip(batch["generated"], batch["text_id"]):
                 save_name = part_save_path / f"{text_id}.wav"
-                torchaudio.save(
-                    save_name,
-                    wav,
-                    sample_rate=self.config.inferencer.sr,
-                    format="wav"
-                )
+                torchaudio.save(save_name, wav, sample_rate=self.config.inferencer.sr, format="wav")
 
         return batch
 
@@ -181,7 +176,9 @@ class Inferencer(BaseTrainer):
                     part_save_path=part_save_path,
                 )
             if self.writer is not None:
-                batch["generated_spectrogram"] = self.melspec_transformer(batch["generated"].squeeze(1))
+                batch["generated_spectrogram"] = self.melspec_transformer(
+                    batch["generated"].squeeze(1)
+                )
                 self._log_batch(batch_idx, batch, sample_rate=self.config.inferencer.sr)
                 self._log_scalars(self.evaluation_metrics)
 

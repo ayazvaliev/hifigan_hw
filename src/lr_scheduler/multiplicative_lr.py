@@ -4,8 +4,7 @@ import torch.optim as optim
 class MultiplicativeLR:
     def __init__(self, optimizer, coeff):
         self._lr_scheduler = optim.lr_scheduler.MultiplicativeLR(
-            optimizer=optimizer,
-            lr_lambda= lambda step: coeff
+            optimizer=optimizer, lr_lambda=lambda step: coeff
         )
 
     def __getattr__(self, name):

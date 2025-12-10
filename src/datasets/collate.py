@@ -1,5 +1,6 @@
 from torch.nn.utils.rnn import pad_sequence
 
+
 def collate_factory(config):
     def collate_fn(dataset_items: list[dict]):
         """
@@ -19,18 +20,21 @@ def collate_factory(config):
         batch = {}
 
         if "spectrogram" in dataset_items[0].keys():
-            batch["spectrogram"] =  pad_sequence([elem["spectrogram"].transpose(0, 1) for elem in dataset_items], 
-                                                  batch_first=True,
-                                                  padding_value=spec_padding).transpose(1,2)
+            batch["spectrogram"] = pad_sequence(
+                [elem["spectrogram"].transpose(0, 1) for elem in dataset_items],
+                batch_first=True,
+                padding_value=spec_padding,
+            ).transpose(1, 2)
         if "audio" in dataset_items[0].keys():
-            batch["audio"] = pad_sequence([elem["audio"] for elem in dataset_items],
-                                          batch_first=True)
+            batch["audio"] = pad_sequence(
+                [elem["audio"] for elem in dataset_items], batch_first=True
+            )
 
         excluded_keys = set(batch.keys())
         for k in dataset_items[0].keys():
             if k not in excluded_keys:
                 batch[k] = [elem[k] for elem in dataset_items]
-        
+
         return batch
 
     return collate_fn

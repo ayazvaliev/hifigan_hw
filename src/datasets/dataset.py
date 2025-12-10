@@ -2,9 +2,9 @@ import os
 import zipfile
 from pathlib import Path
 
+import pandas as pd
 import torchaudio
 import yadisk
-import pandas as pd
 from tqdm.auto import tqdm
 
 from src.datasets.base_dataset import BaseDataset
@@ -33,32 +33,30 @@ class LJSpeechDataset(BaseDataset):
         self.data_root.mkdir(parents=True, exist_ok=True)
 
         if index_dir is None:
-                index_dir = self.data_root
+            index_dir = self.data_root
         else:
             index_dir = Path(index_dir)
         index_path = index_dir / "ljspeechindex.json"
 
         if index_path.exists():
-            index = read_json(index_path)        
+            index = read_json(index_path)
         else:
             os.makedirs(str(index_path.parent), exist_ok=True)
             index = self._create_index(index_path, dataset_url)
         if train_test_split_ratio is not None:
             assert (0 <= train_test_split_ratio) and (train_test_split_ratio <= 1)
             if name == "train":
-                index = index[int(len(index) * train_test_split_ratio):]
+                index = index[int(len(index) * train_test_split_ratio) :]
             else:
-                index = index[:int(len(index) * train_test_split_ratio)]
+                index = index[: int(len(index) * train_test_split_ratio)]
         super().__init__(index, *args, **kwargs)
 
-    def _create_index(
-        self, index_path: Path, dataset_url: None | str
-    ):
+    def _create_index(self, index_path: Path, dataset_url: None | str):
         index = []
 
         top_level_dir = ""
         if dataset_url is not None:
-            print(f'Downloading from {dataset_url}')
+            print(f"Downloading from {dataset_url}")
             if dataset_url.startswith("http"):
                 y = yadisk.YaDisk()
                 meta = y.get_public_meta(dataset_url)
@@ -76,8 +74,7 @@ class LJSpeechDataset(BaseDataset):
                         name.split("/")[0] for name in zip_ref.namelist() if name.strip()
                     )
                     assert (
-                        len(top_level_dir) == 1
-                        or top_level_dir == "wavs"
+                        len(top_level_dir) == 1 or top_level_dir == "wavs"
                     ), "Wrong format for dir"
                     if top_level_dir != "wavs":
                         top_level_dir = top_level_dir.pop()
@@ -89,7 +86,9 @@ class LJSpeechDataset(BaseDataset):
                 raise RuntimeError("dataset path must be either URL or None")
 
         top_level_dir = "LJSpeech-1.1" if dataset_url is None else top_level_dir
-        metadata_df = pd.read_csv(self.data_root / top_level_dir / "metadata.csv", sep="|", header=None, index_col=None)
+        metadata_df = pd.read_csv(
+            self.data_root / top_level_dir / "metadata.csv", sep="|", header=None, index_col=None
+        )
 
         audio_path = self.data_root / top_level_dir / "wavs"
 

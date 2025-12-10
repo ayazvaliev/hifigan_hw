@@ -1,11 +1,11 @@
 import copy
 import logging
 import random
+from random import randint
 
 import torch
 import torchaudio
 from torch.utils.data import Dataset
-from random import randint
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +48,11 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self.acoustic_model = acoustic_model
-        self.txt_encode = acoustic_model and txt_encode 
+        self.txt_encode = acoustic_model and txt_encode
         self.random_cut = random_cut
-        self.max_n_samples = None if (max_audio_length is None or not random_cut) else int(sr * max_audio_length)
+        self.max_n_samples = (
+            None if (max_audio_length is None or not random_cut) else int(sr * max_audio_length)
+        )
 
         self._assert_index_is_valid(index)
         self._index = self._filter_records_from_dataset(index, min_audio_length, max_audio_length)
@@ -58,8 +60,6 @@ class BaseDataset(Dataset):
         if sort_index:
             self._index = self._sort_index(self._index)
         self.target_sr = sr
-
-        
 
         self.instance_transforms = instance_transforms or {}
 
@@ -119,7 +119,7 @@ class BaseDataset(Dataset):
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
         if self.max_n_samples is not None and audio_tensor.size(-1) > self.max_n_samples:
             rand_pos = randint(0, audio_tensor.size(-1) - self.max_n_samples)
-            audio_tensor = audio_tensor[..., rand_pos:rand_pos + self.max_n_samples]
+            audio_tensor = audio_tensor[..., rand_pos : rand_pos + self.max_n_samples]
         return audio_tensor
 
     def preprocess_data(self, instance_data):
@@ -171,9 +171,7 @@ class BaseDataset(Dataset):
 
         initial_size = len(index)
 
-        audio_length_tensor = torch.tensor(
-            [el["length"] for el in index], dtype=torch.int32
-        )
+        audio_length_tensor = torch.tensor([el["length"] for el in index], dtype=torch.int32)
         if not self.max_n_samples and max_audio_length is not None:
             exceeds_audio_length = audio_length_tensor >= max_audio_length
         else:

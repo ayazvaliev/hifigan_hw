@@ -1,1 +1,1 @@
-from src.loss.gan_loss import HiFiGANGeneratorLoss, HiFiGANDiscriminatorLoss
+from src.loss.gan_loss import HiFiGANDiscriminatorLoss, HiFiGANGeneratorLoss

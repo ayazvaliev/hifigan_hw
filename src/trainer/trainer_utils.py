@@ -18,6 +18,7 @@ def get_generator_grouped_parameters(model, weight_decay=1e-2):
         {"params": no_decay_params, "weight_decay": 0.0},
     ]
 
+
 def get_discriminator_grouped_parameters(model, weight_decay=1e-2):
     decay_params = []
     no_decay_params = []

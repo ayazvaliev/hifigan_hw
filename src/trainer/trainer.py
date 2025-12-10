@@ -1,9 +1,9 @@
-import torch
 import numpy as np
+import pandas as pd
+import torch
 
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
-import pandas as pd
 
 
 class Trainer(BaseTrainer):
@@ -11,18 +11,9 @@ class Trainer(BaseTrainer):
     Trainer class. Defines the logic of batch logging and processing.
     """
 
-    def make_opt_step(self, 
-                      batch_idx, 
-                      batch,
-                      metrics,
-                      loss_name, 
-                      optimizer, 
-                      lr_scheduler):
+    def make_opt_step(self, batch_idx, batch, metrics, loss_name, optimizer, lr_scheduler):
         self.grad_scaler.scale(batch[loss_name]).backward()
-        if ((batch_idx + 1) % self.iters_to_accumulate == 0) or (
-            (batch_idx + 1) == self.epoch_len
-        ):
-
+        if ((batch_idx + 1) % self.iters_to_accumulate == 0) or ((batch_idx + 1) == self.epoch_len):
             model_name = loss_name.split("_")[0]
             if model_name == "gen":
                 modules = self.model.generator
@@ -34,14 +25,14 @@ class Trainer(BaseTrainer):
             self.grad_scaler.unscale_(optimizer)
             self._clip_grad_norm(modules)
             self.grad_scaler.step(optimizer)
-            self.grad_scaler.update() 
+            self.grad_scaler.update()
 
             metrics.update(f"grad_norm_{model_name}", self._get_grad_norm(modules))
             optimizer.zero_grad()
 
             if self.is_train and model_name == "disc":
                 self.cur_disc_step += 1
-            
+
             if lr_scheduler is not None:
                 if model_name == "disc" and self.cur_disc_step < self.disc_to_gen_update_ratio:
                     return
@@ -71,12 +62,7 @@ class Trainer(BaseTrainer):
                 batch["disc_loss"] /= self.iters_to_accumulate
         if self.is_train:
             self.make_opt_step(
-                batch_idx,
-                batch,
-                metrics,
-                "disc_loss",
-                self.disc_optimizer,
-                self.disc_lr_scheduler
+                batch_idx, batch, metrics, "disc_loss", self.disc_optimizer, self.disc_lr_scheduler
             )
 
         with torch.set_grad_enabled(self.cur_disc_step == self.disc_to_gen_update_ratio):
@@ -91,12 +77,7 @@ class Trainer(BaseTrainer):
             if self.is_train and self.cur_disc_step == self.disc_to_gen_update_ratio:
                 self.cur_disc_step = 0
                 self.make_opt_step(
-                    batch_idx,
-                    batch,
-                    metrics,
-                    "gen_loss",
-                    self.gen_optimizer,
-                    self.gen_lr_scheduler
+                    batch_idx, batch, metrics, "gen_loss", self.gen_optimizer, self.gen_lr_scheduler
                 )
 
         # update metrics for each loss (in case of multiple losses)

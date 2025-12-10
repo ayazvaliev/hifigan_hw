@@ -1,18 +1,18 @@
-import pandas as pd
 from math import ceil
 
+import pandas as pd
 import torch
 from hydra.utils import get_class, instantiate
 from numpy import inf
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
 
-from src.logger.utils import plot_spectrogram
 from src.datasets.data_utils import inf_loop
+from src.logger.utils import plot_spectrogram
 from src.metrics.tracker import MetricTracker
 from src.trainer.trainer_utils import (
-    get_generator_grouped_parameters,
     get_discriminator_grouped_parameters,
+    get_generator_grouped_parameters,
     has_param,
 )
 from src.utils.io_utils import ROOT_PATH
@@ -498,7 +498,7 @@ class BaseTrainer:
         if "spectrogram" not in batch:
             assert self.acoustic_model is not None
             batch["spectrogram"], _, _, _ = self.acoustic_model.encode_text(batch["text"])
-            batch["spectrogram"] = batch["spectrogram"].squeeze(1).to(self.device)    
+            batch["spectrogram"] = batch["spectrogram"].squeeze(1).to(self.device)
 
         for transform_name in transforms.keys():
             if transform_name in batch:
@@ -589,9 +589,13 @@ class BaseTrainer:
         real_spectrogram = batch["spectrogram"][0:num_samples].detach().cpu()
         generated_spectrogram = batch["generated_spectrogram"][0:num_samples].detach().cpu()
 
-        for i, (real_sample, generated_sample) in enumerate(zip(real_spectrogram, generated_spectrogram)):
+        for i, (real_sample, generated_sample) in enumerate(
+            zip(real_spectrogram, generated_spectrogram)
+        ):
             self.writer.add_image(f"real spectrogram {i + 1}", plot_spectrogram(real_sample))
-            self.writer.add_image(f"generated spectrogram {i + 1}", plot_spectrogram(generated_sample))
+            self.writer.add_image(
+                f"generated spectrogram {i + 1}", plot_spectrogram(generated_sample)
+            )
 
     def log_audio(self, sample_rate, num_samples, **batch):
         if num_samples is None:
@@ -604,16 +608,17 @@ class BaseTrainer:
         generated_audio = batch["generated"][0:num_samples].squeeze(1).detach().cpu().numpy()
 
         for i in range(len(generated_audio)):
-            self.writer.add_audio(f"generated audio {i + 1}", generated_audio[i], sample_rate=sample_rate)
+            self.writer.add_audio(
+                f"generated audio {i + 1}", generated_audio[i], sample_rate=sample_rate
+            )
             if real_audio is not None:
                 self.writer.add_audio(f"real audio {i + 1}", real_audio[i], sample_rate=sample_rate)
 
     def log_table(self, text: list[str], metrics: dict, num_samples, **batch):
-        table = metrics | {'text': text}
+        table = metrics | {"text": text}
         if num_samples is None:
             table = {k: v[:num_samples] for k, v in table.items()}
         self.writer.add_table("text and metrics", pd.DataFrame(table))
-        
 
     def _log_scalars(self, metric_tracker: MetricTracker):
         """
@@ -777,7 +782,6 @@ class BaseTrainer:
             "disc_lr_scheduler": checkpoint["disc_lr_scheduler"],
         }
         return optimizer_sd, lr_scheduler_sd
-
 
     def _from_pretrained(self, pretrained_path):
         """
