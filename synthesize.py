@@ -56,7 +56,7 @@ def main(config):
 
     if config.prompt is not None:
         checkpoint = torch.load(
-            config.inferencer.save_path, map_location=device, weights_only=False
+            config.inferencer.from_pretrained, map_location=device, weights_only=False
         )
         if checkpoint.get("state_dict") is not None:
             sd = checkpoint["state_dict"]
