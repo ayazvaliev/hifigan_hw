@@ -49,7 +49,7 @@ class Inferencer(BaseTrainer):
 
         # path definition
 
-        self.save_path = Path(save_path)
+        self.save_path = save_path
         self.melspec_transformer = melspec_transformer
         self.writer = writer
 
@@ -183,6 +183,7 @@ class Inferencer(BaseTrainer):
             if self.writer is not None:
                 batch["generated_spectrogram"] = self.melspec_transformer(batch["generated"].squeeze(1))
                 self._log_batch(batch_idx, batch, sample_rate=self.config.inferencer.sr)
+                self._log_scalars(self.evaluation_metrics)
 
         ret_none = self.evaluation_metrics is None or self.evaluation_metrics.empty
         return self.evaluation_metrics.result() if not ret_none else None

@@ -48,7 +48,7 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self.acoustic_model = acoustic_model
-        self.txt_encode = txt_encode 
+        self.txt_encode = acoustic_model and txt_encode 
         self.random_cut = random_cut
         self.max_n_samples = None if (max_audio_length is None or not random_cut) else int(sr * max_audio_length)
 

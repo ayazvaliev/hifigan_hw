@@ -9,7 +9,6 @@ from tqdm.auto import tqdm
 
 from src.datasets.base_dataset import BaseDataset
 from src.utils.io_utils import read_json, write_json
-from src.datasets.data_utils import normalize_text
 
 
 class LJSpeechDataset(BaseDataset):
@@ -20,7 +19,6 @@ class LJSpeechDataset(BaseDataset):
         train_test_split_ratio=None,
         index_dir=None,
         dataset_url=None,
-        inference_mode=False,
         *args,
         **kwargs,
     ):
@@ -34,51 +32,28 @@ class LJSpeechDataset(BaseDataset):
         self.data_root = Path(data_root)
         self.data_root.mkdir(parents=True, exist_ok=True)
 
-        self.inference_mode = inference_mode
-
-        if not inference_mode:
-            if index_dir is None:
+        if index_dir is None:
                 index_dir = self.data_root
-            else:
-                index_dir = Path(index_dir)
-            index_path = index_dir / "index.json"
-
-            # each nested dataset class must have an index field that
-            # contains list of dicts. Each dict contains information about
-            # the object, including label, path, etc.
-            if index_path.exists():
-                index = read_json(index_path)
-            else:
-                os.makedirs(str(index_path.parent), exist_ok=True)
-                index = self._create_index(index_path, dataset_url)
-            if train_test_split_ratio is not None:
-                assert (0 <= train_test_split_ratio) and (train_test_split_ratio <= 1)
-                if name == "train":
-                    index = index[int(len(index) * train_test_split_ratio):]
-                else:
-                    index = index[:int(len(index) * train_test_split_ratio)]
         else:
-            index = self._create_index(
-                index_path=None, dataset_url=dataset_url, write_to_disk=False
-            )
+            index_dir = Path(index_dir)
+        index_path = index_dir / "ljspeechindex.json"
+
+        if index_path.exists():
+            index = read_json(index_path)        
+        else:
+            os.makedirs(str(index_path.parent), exist_ok=True)
+            index = self._create_index(index_path, dataset_url)
+        if train_test_split_ratio is not None:
+            assert (0 <= train_test_split_ratio) and (train_test_split_ratio <= 1)
+            if name == "train":
+                index = index[int(len(index) * train_test_split_ratio):]
+            else:
+                index = index[:int(len(index) * train_test_split_ratio)]
         super().__init__(index, *args, **kwargs)
 
     def _create_index(
-        self, index_path: Path, dataset_url: None | str, write_to_disk=True
+        self, index_path: Path, dataset_url: None | str
     ):
-        """
-        Create index for the dataset. The function processes dataset metadata
-        and utilizes it to get information dict for each element of
-        the dataset.
-
-        Args:
-            name (str): partition name
-            path (str): path to yandex disk file
-        Returns:
-            index (list[dict]): list, containing dict for each element of
-                the dataset. The dict has required metadata information,
-                such as label and object path.
-        """
         index = []
 
         top_level_dir = ""
@@ -113,11 +88,8 @@ class LJSpeechDataset(BaseDataset):
             else:
                 raise RuntimeError("dataset path must be either URL or None")
 
-        if not self.inference_mode:
-            top_level_dir = "LJSpeech-1.1" if dataset_url is None else top_level_dir
-            metadata_df = pd.read_csv(self.data_root / top_level_dir / "metadata.csv", sep="|", header=None, index_col=None)
-        else:
-            metadata_df = None
+        top_level_dir = "LJSpeech-1.1" if dataset_url is None else top_level_dir
+        metadata_df = pd.read_csv(self.data_root / top_level_dir / "metadata.csv", sep="|", header=None, index_col=None)
 
         audio_path = self.data_root / top_level_dir / "wavs"
 
@@ -130,11 +102,9 @@ class LJSpeechDataset(BaseDataset):
                 "length": num_frames / sample_rate,
             }
             if metadata_df is not None:
-                data_instance["text"] = normalize_text(str(metadata_df.loc[metadata_df[0] == item_name, 2].iloc[0]))
+                data_instance["text"] = str(metadata_df.loc[metadata_df[0] == item_name, 2].iloc[0])
             index.append(data_instance)
 
-        # write index to disk
-        if write_to_disk:
-            write_json(index, str(index_path))
+        write_json(index, str(index_path))
 
         return index

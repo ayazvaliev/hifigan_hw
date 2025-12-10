@@ -3,13 +3,13 @@ from pathlib import Path
 
 import hydra
 import torch
+import torchaudio
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from src.datasets.data_utils import get_dataloaders
 from src.trainer import Inferencer
 from src.utils.init_utils import set_random_seed
-from src.utils.io_utils import ROOT_PATH
 from speechbrain.inference.TTS import FastSpeech2
 
 
@@ -37,7 +37,7 @@ def main(config):
 
     if config.get("writer", None) is not None:
         writer = instantiate(config.writer, project_config)
-        melspec_transformer = instantiate(config.melspec_transformer).to(device)
+        melspec_transformer = instantiate(config.melspec_transformer, _recursive_=False).to(device)
     else:
         writer = None
         melspec_transformer = None
@@ -51,13 +51,26 @@ def main(config):
     else:
         acoustic_model = None
 
-    # setup data_loader instances
-    # batch_transforms should be put on device
-    dataloaders, batch_transforms = get_dataloaders(config, device, acoustic_model)
-
     # build model architecture, then print to console
     model = instantiate(config.model).to(device)
     print(model)
+
+    if config.prompt is not None:
+        checkpoint = torch.load(config.inferencer.save_path, map_location=device, weights_only=False)
+        if checkpoint.get("state_dict") is not None:
+            sd = checkpoint["state_dict"]
+        else:
+            sd = checkpoint
+        model.load_state_dict(sd)
+
+        melspec_output, _, _, _ = acoustic_model.encode_text([config.prompt])
+        generated = model(melspec_output).squeeze(0)
+        torchaudio.save(str(Path(config.inferencer.save_path) / "generated.wav"), generated, sample_rate=config.inferencer.sr, format="wav")
+        return
+
+    # setup data_loader instances
+    # batch_transforms should be put on device
+    dataloaders, batch_transforms = get_dataloaders(config, device, acoustic_model)
 
     if config.inferencer.get("compile", False):
         assert not config.trainer.get("ts_compile", False)
@@ -67,8 +80,10 @@ def main(config):
     metrics = instantiate(config.metrics)
 
     # save_path for model predictions
-    save_path = Path(config.inferencer["save_path"] or ROOT_PATH / "data" / "saved")
-    save_path.mkdir(exist_ok=True, parents=True)
+    save_path = config.inferencer.get("save_path", None)
+    if save_path is not None:
+        save_path = Path(save_path)
+        save_path.mkdir(exist_ok=True, parents=True)
 
     inferencer = Inferencer(
         model=model,

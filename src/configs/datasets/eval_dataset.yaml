@@ -1,8 +1,26 @@
 ljspeech:
-  _target_: src.datasets.CustomDataset
+  _target_: src.datasets.LJSpeechDataset
   data_root: ${data_root}
+  index_dir: ${index_dir}
   sr: ${inferencer.sr}
+  limit: 50
   instance_transforms: ${transforms.instance_transforms.inference}
 
-external_dataset:
-  
+vctk_1:
+  _target_: src.datasets.VCTKDataset
+  data_root: ${data_root}
+  index_dir: ${index_dir}
+  speaker_id: p225
+  sr: ${inferencer.sr}
+  limit: 50
+  instance_transforms: ${transforms.instance_transforms.inference}
+
+vctk_2:
+  _target_: src.datasets.VCTKDataset
+  data_root: ${data_root}
+  index_dir: ${index_dir}
+  speaker_id: p226
+  sr: ${inferencer.sr}
+  shuffle_index: True
+  limit: 50
+  instance_transforms: ${transforms.instance_transforms.inference}

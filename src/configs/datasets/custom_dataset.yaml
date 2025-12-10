@@ -1,0 +1,5 @@
+val:
+  _target_: src.datasets.CustomDataset
+  data_root: ${data_root}
+  dataset_url: ${dataset_url}
+  sr: 22050

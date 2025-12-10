@@ -1,13 +1,14 @@
 defaults:
   - model: generator
-  - writer: cometml
   - metrics: mos_metric
-  - datasets: eval_dataset # we do not want to run inference on training data
+  - datasets: custom_dataset # we do not want to run inference on training data
   - dataloader: eval_dataloader
   - transforms: no_transforms
   - _self_
 
-data_root: "eval_dataset"
+data_root: "."
+index_dir: indexes
+prompt: null
 dataset_url: null
 
 melspec_transformer:
