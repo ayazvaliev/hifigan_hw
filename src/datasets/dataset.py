@@ -50,7 +50,7 @@ class LJSpeechDataset(BaseDataset):
                 index = read_json(index_path)
             else:
                 os.makedirs(str(index_path.parent), exist_ok=True)
-                index = self._create_index(name, index_path, dataset_url)
+                index = self._create_index(index_path, dataset_url)
             if train_test_split_ratio is not None:
                 assert (0 <= train_test_split_ratio) and (train_test_split_ratio <= 1)
                 if name == "train":
