@@ -608,7 +608,6 @@ class BaseTrainer:
         self.log_table(num_samples=num_samples, batch_idx=batch_idx, **batch)
 
     def log_spectrogram(self, batch_idx, num_samples, **batch):
-        batch_size = batch["spectrogram"]
         real_spectrogram = batch["spectrogram"][0:num_samples].detach().cpu()
         generated_spectrogram = batch["generated_spectrogram"][0:num_samples].detach().cpu()
 

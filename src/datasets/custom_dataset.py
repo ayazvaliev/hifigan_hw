@@ -32,19 +32,6 @@ class CustomDataset(BaseDataset):
     def _create_index(
         self, dataset_url: None | str,
     ):
-        """
-        Create index for the dataset. The function processes dataset metadata
-        and utilizes it to get information dict for each element of
-        the dataset.
-
-        Args:
-            name (str): partition name
-            path (str): path to yandex disk file
-        Returns:
-            index (list[dict]): list, containing dict for each element of
-                the dataset. The dict has required metadata information,
-                such as label and object path.
-        """
         index = []
 
         top_level_dir = ""

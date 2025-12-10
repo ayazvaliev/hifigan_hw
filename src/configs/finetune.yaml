@@ -57,6 +57,10 @@ gen_loss_function:
 disc_loss_function:
   _target_: src.loss.HiFiGANDiscriminatorLoss
 
+acoustic_config:
+  model_name: speechbrain/tts-fastspeech2-ljspeech
+  save_dir: acoustic_models/tts-fastspeech2-ljspeech
+
 device: auto
 
 trainer:

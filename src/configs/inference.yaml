@@ -2,7 +2,7 @@ defaults:
   - model: generator
   - writer: cometml
   - metrics: mos_metric
-  - datasets: custom_dataset # we do not want to run inference on training data
+  - datasets: eval_dataset # we do not want to run inference on training data
   - dataloader: eval_dataloader
   - transforms: no_transforms
   - _self_

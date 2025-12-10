@@ -52,8 +52,6 @@ class Inferencer(BaseTrainer):
         self.save_path = Path(save_path)
         self.melspec_transformer = melspec_transformer
         self.writer = writer
-        if self.writer is not None:
-            self.writer.set_step(0, mode="inference")
 
         # define metrics
         self.metrics = metrics
@@ -84,6 +82,8 @@ class Inferencer(BaseTrainer):
         """
         part_logs = {}
         for part, dataloader in self.evaluation_dataloaders.items():
+            if self.writer is not None:
+                self.writer.set_step(0, mode=part)
             logs = self._inference_part(part, dataloader)
             part_logs[part] = logs
         return part_logs
@@ -180,9 +180,9 @@ class Inferencer(BaseTrainer):
                     metrics=self.evaluation_metrics,
                     part_save_path=part_save_path,
                 )
-                if self.writer is not None:
-                    batch["generated_spectrogram"] = self.melspec_transformer(batch["generated"].squeeze(1))
-                    self._log_batch(batch_idx, batch, sample_rate=self.config.inferencer.sr)
+            if self.writer is not None:
+                batch["generated_spectrogram"] = self.melspec_transformer(batch["generated"].squeeze(1))
+                self._log_batch(batch_idx, batch, sample_rate=self.config.inferencer.sr)
 
         ret_none = self.evaluation_metrics is None or self.evaluation_metrics.empty
         return self.evaluation_metrics.result() if not ret_none else None
