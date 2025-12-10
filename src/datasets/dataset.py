@@ -59,12 +59,12 @@ class LJSpeechDataset(BaseDataset):
                     index = index[:int(len(index) * train_test_split_ratio)]
         else:
             index = self._create_index(
-                name=None, index_path=None, dataset_url=dataset_url, write_to_disk=False
+                index_path=None, dataset_url=dataset_url, write_to_disk=False
             )
         super().__init__(index, *args, **kwargs)
 
     def _create_index(
-        self, name: str, index_path: Path, dataset_url: None | str, write_to_disk=True
+        self, index_path: Path, dataset_url: None | str, write_to_disk=True
     ):
         """
         Create index for the dataset. The function processes dataset metadata
@@ -102,7 +102,7 @@ class LJSpeechDataset(BaseDataset):
                     assert (
                         len(top_level_dir) == 1
                         or top_level_dir == "wavs"
-                    ), "Wrong format for inference dir"
+                    ), "Wrong format for dir"
                     if top_level_dir != "wavs":
                         top_level_dir = top_level_dir.pop()
                     else:

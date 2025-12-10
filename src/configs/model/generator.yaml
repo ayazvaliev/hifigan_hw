@@ -1,0 +1,8 @@
+_target_: src.model.Generator
+n_bands: 80
+hidden_dim: 256
+proj_kernel_size: 7
+upsample_kernel_sizes: [16, 16, 8]
+mrf_kernel_sizes: [3, 5, 7]
+mrf_dilations: [[1, 2], [2, 6], [3, 12]]
+negative_slope: 0.1

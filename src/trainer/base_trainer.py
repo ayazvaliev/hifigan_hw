@@ -1,5 +1,4 @@
-import gc
-from abc import abstractmethod
+import pandas as pd
 from math import ceil
 
 import torch
@@ -8,6 +7,7 @@ from numpy import inf
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
 
+from src.logger.utils import plot_spectrogram
 from src.datasets.data_utils import inf_loop
 from src.metrics.tracker import MetricTracker
 from src.trainer.trainer_utils import (
@@ -588,11 +588,8 @@ class BaseTrainer:
             total = self.epoch_len
         return base.format(current, total, 100.0 * current / total)
 
-    @abstractmethod
-    def _log_batch(self, batch_idx, batch, sample_rate, num_samples, mode="train"):
+    def _log_batch(self, batch_idx, batch, sample_rate, num_samples=None):
         """
-        Abstract method. Should be defined in the nested Trainer Class.
-
         Log data from batch. Calls self.writer.add_* to log data
         to the experiment tracker.
 
@@ -603,7 +600,44 @@ class BaseTrainer:
             mode (str): train or inference. Defines which logging
                 rules to apply.
         """
-        return NotImplementedError()
+        # method to log data from you batch
+        # such as audio, text or images, for example
+
+        self.log_spectrogram(num_samples=num_samples, batch_idx=batch_idx, **batch)
+        self.log_audio(sample_rate=sample_rate, batch_idx=batch_idx, num_samples=num_samples, **batch)
+        self.log_table(num_samples=num_samples, batch_idx=batch_idx, **batch)
+
+    def log_spectrogram(self, batch_idx, num_samples, **batch):
+        batch_size = batch["spectrogram"]
+        real_spectrogram = batch["spectrogram"][0:num_samples].detach().cpu()
+        generated_spectrogram = batch["generated_spectrogram"][0:num_samples].detach().cpu()
+
+        for i, (real_sample, generated_sample) in enumerate(zip(real_spectrogram, generated_spectrogram)):
+            self.writer.add_image(f"real spectrogram {batch_idx + i + 1}", plot_spectrogram(real_sample))
+            self.writer.add_image(f"generated spectrogram {batch_idx + i + 1}", plot_spectrogram(generated_sample))
+
+    def log_audio(self, batch_idx, sample_rate, num_samples, **batch):
+        if num_samples is None:
+            num_samples = batch["generated"].size(0)
+
+        if "audio" in batch:
+            real_audio = batch["audio"][0:num_samples].squeeze(1).detach().cpu().numpy()
+        else:
+            real_audio = None
+        generated_audio = batch["generated"][0:num_samples].squeeze(1).detach().cpu().numpy()
+
+        for i in range(len(generated_audio)):
+            self.writer.add_audio(f"generated audio {batch_idx + i + 1}", generated_audio[i], sample_rate=sample_rate)
+            if real_audio is not None:
+                self.writer.add_audio(f"real audio {batch_idx + i + 1}", real_audio[i], sample_rate=sample_rate)
+
+    def log_table(self, text: list[str], metrics: dict, num_samples, batch_idx, **batch):
+        row_cnt = len(text)
+        table = metrics | {'text': text} | {'id': [i + 1 for i in range(batch_idx, batch_idx + row_cnt)]}
+        if num_samples is None:
+            table = {k: v[:num_samples] for k, v in table.items()}
+        self.writer.add_table("text and metrics", pd.DataFrame(table))
+        
 
     def _log_scalars(self, metric_tracker: MetricTracker):
         """

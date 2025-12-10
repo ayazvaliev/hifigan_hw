@@ -1,0 +1,6 @@
+val:
+  _target_: src.datasets.CustomDataset
+  data_root: ${data_root}
+  sr: ${inferencer.sr}
+  name: val
+  instance_transforms: ${transforms.instance_transforms.inference}

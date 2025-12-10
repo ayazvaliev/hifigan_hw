@@ -7,7 +7,6 @@ import torchaudio
 from torch.utils.data import Dataset
 from random import randint
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +29,8 @@ class BaseDataset(Dataset):
         instance_transforms=None,
         min_audio_length=None,
         max_audio_length=None,
+        random_cut=True,
+        acoustic_model=None,
         **kwargs,
     ):
         """
@@ -45,13 +46,18 @@ class BaseDataset(Dataset):
                 should be applied on the instance. Depend on the
                 tensor name.
         """
+        self.acoustic_model = acoustic_model
+        self.random_cut = random_cut
+        self.max_n_samples = None if (max_audio_length is None or not random_cut) else int(sr * max_audio_length)
+
         self._assert_index_is_valid(index)
-        # self._index = self._filter_records_from_dataset(index, min_audio_length, max_audio_length)
+        self._index = self._filter_records_from_dataset(index, min_audio_length, max_audio_length)
         self._index = self._shuffle_and_limit_index(index, limit, shuffle_index)
         if sort_index:
             self._index = self._sort_index(self._index)
         self.target_sr = sr
-        self.max_n_samples = None if max_audio_length is None else int(sr * max_audio_length)
+
+        
 
         self.instance_transforms = instance_transforms or {}
 
@@ -79,15 +85,8 @@ class BaseDataset(Dataset):
             data_dict["audio"] = data_dict["audio"].squeeze(0)
             if "get_spectrogram" in self.instance_transforms:
                 data_dict["spectrogram"] = self.get_spectrogram(data_dict["audio"])
-
-        if "spectrogram_path" in data_dict:
-            #TODO
-            raise NotImplementedError()
-
-        '''
-        if "text" in data_dict:
-            data_dict["text_encoded"] = self.encode_text(data_dict["text"])
-        '''
+        if "text" in data_dict and "spectrogram" not in data_dict:
+            data_dict["spectrogram"] = self.encode_text(data_dict["text"])
 
         data_dict = self.preprocess_data(data_dict)
 
@@ -106,7 +105,9 @@ class BaseDataset(Dataset):
         return spectrogram
 
     def encode_text(self, text: str):
-        raise NotImplementedError()
+        assert self.acoustic_model is not None
+        spectrogram, _, _, _ = self.acoustic_model.encode_text([text])
+        return spectrogram.squeeze(0)
 
     def load_audio(self, path):
         audio_tensor, sr = torchaudio.load(path)
@@ -142,8 +143,8 @@ class BaseDataset(Dataset):
                 )
         return instance_data
 
-    @staticmethod
     def _filter_records_from_dataset(
+        self,
         index,
         min_audio_length,
         max_audio_length,
@@ -171,7 +172,7 @@ class BaseDataset(Dataset):
         audio_length_tensor = torch.tensor(
             [el["length"] for el in index], dtype=torch.int32
         )
-        if max_audio_length is not None:
+        if not self.max_n_samples and max_audio_length is not None:
             exceeds_audio_length = audio_length_tensor >= max_audio_length
         else:
             exceeds_audio_length = False

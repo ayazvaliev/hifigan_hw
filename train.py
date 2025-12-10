@@ -8,6 +8,7 @@ from omegaconf import OmegaConf
 from src.datasets.data_utils import get_dataloaders
 from src.trainer import Trainer
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
+from speechbrain.inference.TTS import FastSpeech2
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -28,16 +29,25 @@ def main(config):
 
     project_config = OmegaConf.to_container(config, resolve=True)
     logger = setup_saving_and_logging(config)
-    writer = instantiate(config.writer, logger, project_config)
+    writer = instantiate(config.writer, logger=logger, project_config=project_config)
 
-    if config.trainer.device == "auto":
+    if config.device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     else:
-        device = config.trainer.device
+        device = config.device
+
+    if config.get("acoustic_config", None) is not None:
+        acoustic_model = FastSpeech2.from_hparams(
+            source=config.acoustic_config.model_name,
+            savedir=config.acoustic_config.save_dir,
+            run_opts={"device": device}
+        )
+    else:
+        acoustic_model = None
 
     # setup data_loader instances
     # batch_transforms should be put on device
-    dataloaders, batch_transforms = get_dataloaders(config, device)
+    dataloaders, batch_transforms = get_dataloaders(config, device, acoustic_model)
 
     # build model architecture, then print to console
     melspec_transformer = instantiate(config.melspec_transformer)

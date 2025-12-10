@@ -13,9 +13,9 @@ class CometMLWriter:
 
     def __init__(
         self,
-        logger,
         project_config,
         project_name,
+        logger=None,
         workspace=None,
         run_id=None,
         run_name=None,
@@ -45,7 +45,7 @@ class CometMLWriter:
             self.run_id = run_id
 
             resume = False
-            if project_config["trainer"].get("resume_from") is not None:
+            if project_config.get("trainer", None) and project_config["trainer"].get("resume_from") is not None:
                 resume = True
 
             if resume:
@@ -76,7 +76,10 @@ class CometMLWriter:
             self.comel_ml = comet_ml
 
         except ImportError:
-            logger.warning("For use comet_ml install it via \n\t pip install comet_ml")
+            if logger is not None:
+                logger.warning("For use comet_ml install it via \n\t pip install comet_ml")
+            else:
+                print("For use comet_ml install it via \n\t pip install comet_ml")
 
         self.step = 0
         # the mode is usually equal to the current partition name

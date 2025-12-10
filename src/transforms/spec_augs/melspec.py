@@ -37,11 +37,9 @@ class LogMelSpecTransform(nn.Module):
             n_fft=config.n_fft,
             f_min=config.f_min,
             f_max=config.f_max,
-            n_mels=config.n_mels
+            n_mels=config.n_mels,
+            power=config.power
         )
-
-        # The is no way to set power in constructor in 0.5.0 version.
-        self.mel_spectrogram.spectrogram.power = config.power
 
         # Default `torchaudio` mel basis uses HTK formula. In order to be compatible with WaveGlow
         # we decided to use Slaney one instead (as well as `librosa` does by default).

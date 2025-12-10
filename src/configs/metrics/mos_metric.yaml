@@ -1,0 +1,7 @@
+train:
+  []
+
+inference:
+  - _target_: src.metrics.WMOS
+    name: WV-MOS
+    device: ${device}

@@ -16,6 +16,8 @@ datasets
 yadisk
 torchcodec
 librosa
+speechbrain
+git+https://github.com/AndreevP/wvmos
 
 black
 isort

@@ -25,32 +25,12 @@ class Inferencer(BaseTrainer):
         device,
         dataloaders,
         save_path,
+        melspec_transformer=None,
+        writer=None,
         metrics=None,
         batch_transforms=None,
         skip_model_load=False,
     ):
-        """
-        Initialize the Inferencer.
-
-        Args:
-            model (nn.Module): PyTorch model.
-            config (DictConfig): run config containing inferencer config.
-            device (str): device for tensors and model.
-            dataloaders (dict[DataLoader]): dataloaders for different
-                sets of data.
-            save_path (str): path to save model predictions and other
-                information.
-            metrics (dict): dict with the definition of metrics for
-                inference (metrics[inference]). Each metric is an instance
-                of src.metrics.BaseMetric.
-            batch_transforms (dict[nn.Module] | None): transforms that
-                should be applied on the whole batch. Depend on the
-                tensor name.
-            skip_model_load (bool): if False, require the user to set
-                pre-trained checkpoint path. Set this argument to True if
-                the model desirable weights are defined outside of the
-                Inferencer Class.
-        """
         assert (
             skip_model_load or config.inferencer.get("from_pretrained") is not None
         ), "Provide checkpoint or set skip_model_load=True"
@@ -70,19 +50,17 @@ class Inferencer(BaseTrainer):
         # path definition
 
         self.save_path = Path(save_path)
-
-        # normalizer
-
-        self.peak_normalizer = PeakNormalization(
-            apply_to="only_too_loud_sounds", sample_rate=16_000, output_type="tensor", p=1.0
-        )
+        self.melspec_transformer = melspec_transformer
+        self.writer = writer
+        if self.writer is not None:
+            self.writer.set_step(0, mode="inference")
 
         # define metrics
         self.metrics = metrics
         if self.metrics is not None:
             self.evaluation_metrics = MetricTracker(
                 *[m.name for m in self.metrics["inference"]],
-                writer=None,
+                writer=writer,
             )
         else:
             self.evaluation_metrics = None
@@ -135,27 +113,34 @@ class Inferencer(BaseTrainer):
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
 
-        outputs = self.model(batch["audio_mix"])
-        batch.update(outputs)
+        outputs = self.model(**batch)
+        batch.update({"generated": outputs})
 
-        batch["logits"] = self.peak_normalizer(batch["logits"])
+        peak_val, _ = torch.max(torch.abs(batch["generated"]), dim=-1)
+        exceeds_peak = peak_val > 1
+        if torch.any(exceeds_peak) > 1:
+            norm_factor = peak_val[exceeds_peak][..., None]
+            batch["generated"][exceeds_peak] = batch["generated"][exceeds_peak] / norm_factor
 
-        if "audio_concat" in batch and metrics is not None:
-            for met in self.metrics["inference"]:
-                metrics.update(met.name, met(**batch))
+        batch["metrics"] = {}
+        for met in self.metrics["inference"]:
+            calculated_metric = met(**batch)
+            if not isinstance(calculated_metric, list):
+                calculated_metric = [calculated_metric] * batch["generated"].size(0)
+            batch["metrics"][met.name] = calculated_metric
+
+            metrics.update(met.name, sum(calculated_metric) / len(calculated_metric))
 
         if part_save_path is not None:
-            batch_size = batch["logits"].size(0)
-            for i in range(batch_size):
-                audio_mix_name = Path(batch["audio_mix_path"][i]).name
-                for speaker_id, speaker_dir in enumerate(["s1", "s2"]):
-                    save_name = part_save_path / speaker_dir / audio_mix_name
-                    torchaudio.save(
-                        save_name,
-                        batch["logits"][i, speaker_id : speaker_id + 1].cpu(),
-                        sample_rate=16_000,
-                        format=audio_mix_name.split(".")[-1],
-                    )
+            batch["generated"] = batch["generated"].cpu()
+            for wav, text_id in zip(batch["generated"], batch["text_id"]):
+                save_name = part_save_path / f"{text_id}.wav"
+                torchaudio.save(
+                    save_name,
+                    wav,
+                    sample_rate=self.config.inferencer.sr,
+                    format="wav"
+                )
 
         return batch
 
@@ -180,8 +165,6 @@ class Inferencer(BaseTrainer):
         if self.save_path is not None:
             part_save_path = self.save_path / part
             part_save_path.mkdir(exist_ok=True, parents=True)
-            (part_save_path / "s1").mkdir(exist_ok=True)
-            (part_save_path / "s2").mkdir(exist_ok=True)
         else:
             part_save_path = None
 
@@ -197,6 +180,9 @@ class Inferencer(BaseTrainer):
                     metrics=self.evaluation_metrics,
                     part_save_path=part_save_path,
                 )
+                if self.writer is not None:
+                    batch["generated_spectrogram"] = self.melspec_transformer(batch["generated"].squeeze(1))
+                    self._log_batch(batch_idx, batch, sample_rate=self.config.inferencer.sr)
 
         ret_none = self.evaluation_metrics is None or self.evaluation_metrics.empty
         return self.evaluation_metrics.result() if not ret_none else None

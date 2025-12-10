@@ -1,5 +1,6 @@
-from src.model.hifigan import HifiGAN
+from src.model.hifigan import HifiGAN, Generator
 
 __all__ = [
-    "HiFiGAN"
+    "HiFiGAN",
+    "Generator"
 ]

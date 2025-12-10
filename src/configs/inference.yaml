@@ -1,17 +1,38 @@
 defaults:
-  - model: tdanet_ffnonly
-  - metrics: fast_metrics
-  - datasets: dataset_eval # we do not want to run inference on training data
-  - dataloader: dataloader
-  - transforms: transforms_supervised_mix
+  - model: generator
+  - writer: cometml
+  - metrics: mos_metric
+  - datasets: custom_dataset # we do not want to run inference on training data
+  - dataloader: eval_dataloader
+  - transforms: no_transforms
   - _self_
 
-data_root: "."
+data_root: "eval_dataset"
 dataset_url: null
 
+melspec_transformer:
+  _target_: src.transforms.LogMelSpecTransform
+  config:
+    _target_: src.transforms.spec_augs.melspec.MelSpectrogramConfig
+    sr: 22050
+    win_length: 1024
+    hop_length: 256
+    n_fft: 1024
+    f_min: 0
+    f_max: 8000
+    n_mels: 80
+    power: 1.0
+    pad_value: -11.5129251
+
+acoustic_config:
+  model_name: speechbrain/tts-fastspeech2-ljspeech
+  save_dir: acoustic_models/tts-fastspeech2-ljspeech
+
+device: auto
+
 inferencer:
-  device_tensors: ["audio_mix"] # which tensors should be on device (ex. GPU)
-  device: auto # device name or "auto"
-  save_path: null # any name here, can be a dataset name
+  device_tensors: ["spectrogram"] # which tensors should be on device (ex. GPU)
+  save_path: saved_samples # any name here, can be a dataset name
   seed: 1
-  from_pretrained: null # path to the pretrained model
+  sr: 22050
+  from_pretrained: ckpts/checkpoint-epoch250_gen.pth # path to the pretrained model

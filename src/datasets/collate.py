@@ -1,4 +1,3 @@
-import torch
 from torch.nn.utils.rnn import pad_sequence
 
 def collate_factory(config):
@@ -17,7 +16,6 @@ def collate_factory(config):
         # spectrogram [F, T] -> [T, F] -> [N, T, F] -> [N, F, T] NFT :O
         # audio [T] -> [N, T]
         spec_padding = config.melspec_transformer.config.pad_value
-        text_padding = None # TODO
         batch = {}
 
         if "spectrogram" in dataset_items[0].keys():
@@ -27,10 +25,6 @@ def collate_factory(config):
         if "audio" in dataset_items[0].keys():
             batch["audio"] = pad_sequence([elem["audio"] for elem in dataset_items],
                                           batch_first=True)
-        if "text_encoded" in dataset_items[0].keys():
-            batch["text_encoded"] =  pad_sequence([elem["text_encoded"] for elem in dataset_items],
-                                                  batch_first=True,
-                                                  padding_value=text_padding)
 
         excluded_keys = set(batch.keys())
         for k in dataset_items[0].keys():

@@ -83,8 +83,9 @@ class Generator(nn.Module):
         self.act = nn.LeakyReLU(negative_slope)
         self.final_act = torch.nn.Tanh()
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, spectrogram: torch.Tensor, **batch):
         # x [N, F, T]
+        x = spectrogram
         x = self.conv_proj(x)
         for block in self.gen_blocks:
             x = block(self.act(x))

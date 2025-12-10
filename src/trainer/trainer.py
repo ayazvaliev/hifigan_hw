@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 
-from src.logger.utils import plot_spectrogram
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+import pandas as pd
 
 
 class Trainer(BaseTrainer):
@@ -106,60 +106,18 @@ class Trainer(BaseTrainer):
                 saved_loss *= self.iters_to_accumulate
             metrics.update(loss_name, saved_loss)
 
+        peak_val, _ = torch.max(torch.abs(batch["generated"]), dim=-1)
+        exceeds_peak = peak_val > 1
+        if torch.any(exceeds_peak) > 1:
+            norm_factor = peak_val[exceeds_peak][..., None]
+            batch["generated"][exceeds_peak] = batch["generated"][exceeds_peak] / norm_factor
+
+        batch["metrics"] = {}
         with torch.no_grad():
             for met in metric_funcs:
-                metrics.update(met.name, met(**batch))
+                calculated_metric = met(**batch)
+                if not isinstance(calculated_metric, list):
+                    calculated_metric = [calculated_metric] * batch["generated"].size(0)
+                batch["metrics"][met.name] = calculated_metric
+                metrics.update(met.name, sum(calculated_metric) / len(calculated_metric))
         return batch
-
-    def _log_batch(self, batch_idx, batch, sample_rate, num_samples, mode="train"):
-        """
-        Log data from batch. Calls self.writer.add_* to log data
-        to the experiment tracker.
-
-        Args:
-            batch_idx (int): index of the current batch.
-            batch (dict): dict-based batch after going through
-                the 'process_batch' function.
-            mode (str): train or inference. Defines which logging
-                rules to apply.
-        """
-        # method to log data from you batch
-        # such as audio, text or images, for example
-
-        # logging scheme might be different for different partitions
-        if mode == "train":  # the method is called only every self.log_step steps
-            self.log_spectrogram(num_samples=num_samples, **batch)
-            self.log_audio(sample_rate=sample_rate, num_samples=num_samples, **batch)
-        else:
-            # Log Stuff
-            self.log_spectrogram(num_samples=num_samples, **batch)
-            self.log_audio(sample_rate=sample_rate, num_samples=num_samples, **batch)
-
-    def log_spectrogram(self, num_samples, **batch):
-        real_spectrogram = batch["spectrogram"][0:num_samples].detach().cpu()
-        generated_spectrogram = batch["generated_spectrogram"][0:num_samples].detach().cpu()
-
-        for i, (real_sample, generated_sample) in enumerate(zip(real_spectrogram, generated_spectrogram)):
-            self.writer.add_image(f"real spectrogram {i + 1}", plot_spectrogram(real_sample))
-            self.writer.add_image(f"generated spectrogram {i + 1}", plot_spectrogram(generated_sample))
-
-    def log_audio(self, sample_rate, num_samples, **batch):
-        real_audio = batch["audio"][0:num_samples].squeeze(1).detach().cpu().numpy()
-        generated_audio = batch["generated"][0:num_samples].squeeze(1).detach().cpu().numpy()
-
-        peak_val = np.max(np.abs(generated_audio), axis=-1)
-        exceeds_peak = peak_val > 1
-        if np.any(exceeds_peak):
-            norm_factor = peak_val[exceeds_peak][:, None]
-            generated_audio[exceeds_peak] = generated_audio[exceeds_peak] / norm_factor
-
-        for i, (real_sample, generated_sample) in enumerate(zip(real_audio, generated_audio)):
-            self.writer.add_audio(f"real audio {i + 1}", real_sample, sample_rate=sample_rate)
-            self.writer.add_audio(f"generated audio {i + 1}", generated_sample, sample_rate=sample_rate)
-
-    def log_predictions(
-        self,
-        **batch,
-    ):
-        # TBD
-        pass

@@ -214,6 +214,15 @@ test_*
 # Датасет
 ljspeech.zip
 LJSpeech-1.1
+eval_dataset/
 
 #Индексы
 indexes/
+
+# Models
+acoustic_models/
+ckpts/
+
+# Test examples
+examples/
+saved_samples/
