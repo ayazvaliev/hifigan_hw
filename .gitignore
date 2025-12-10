@@ -215,6 +215,7 @@ test_*
 ljspeech.zip
 LJSpeech-1.1
 eval_dataset/
+VCTK-Corpus*
 
 #Индексы
 indexes/

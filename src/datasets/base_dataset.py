@@ -31,6 +31,7 @@ class BaseDataset(Dataset):
         max_audio_length=None,
         random_cut=True,
         acoustic_model=None,
+        txt_encode=True,
         **kwargs,
     ):
         """
@@ -47,6 +48,7 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self.acoustic_model = acoustic_model
+        self.txt_encode = txt_encode 
         self.random_cut = random_cut
         self.max_n_samples = None if (max_audio_length is None or not random_cut) else int(sr * max_audio_length)
 
@@ -85,7 +87,7 @@ class BaseDataset(Dataset):
             data_dict["audio"] = data_dict["audio"].squeeze(0)
             if "get_spectrogram" in self.instance_transforms:
                 data_dict["spectrogram"] = self.get_spectrogram(data_dict["audio"])
-        if "text" in data_dict and "spectrogram" not in data_dict:
+        if self.txt_encode and "text" in data_dict and "spectrogram" not in data_dict:
             data_dict["spectrogram"] = self.encode_text(data_dict["text"])
 
         data_dict = self.preprocess_data(data_dict)

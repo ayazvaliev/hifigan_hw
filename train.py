@@ -40,7 +40,7 @@ def main(config):
         acoustic_model = FastSpeech2.from_hparams(
             source=config.acoustic_config.model_name,
             savedir=config.acoustic_config.save_dir,
-            run_opts={"device": "cpu"}
+            run_opts={"device": device}
         )
     else:
         acoustic_model = None
@@ -70,6 +70,7 @@ def main(config):
         logger=logger,
         writer=writer,
         batch_transforms=batch_transforms,
+        acoustic_model=acoustic_model
     )
 
     trainer.train()

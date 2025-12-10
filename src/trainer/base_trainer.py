@@ -33,6 +33,7 @@ class BaseTrainer:
         dataloaders,
         logger,
         writer,
+        acoustic_model=None,
         batch_transforms=None,
     ):
         """
@@ -62,6 +63,7 @@ class BaseTrainer:
         self.project_config = project_config
 
         self.model_ = model
+        self.acoustic_model = acoustic_model
 
         self.cfg_trainer = self.config.trainer
 
@@ -490,40 +492,15 @@ class BaseTrainer:
         # do batch transforms on device
         transform_type = "train" if self.is_train else "inference"
         transforms = self.batch_transforms.get(transform_type)
-        if transforms is None:
-            if "audio_s1" in batch and "audio_s2" in batch:
-                batch["audio_concat"] = torch.concat(
-                    [batch["audio_s1"], batch["audio_s2"]], dim=1
-                ).to(self.device)
+        if not transforms:
+            transforms = {}
 
-            return batch
-
-        used_transforms = set()
-        for transform_name in transforms.keys():
-            if not transform_name.startswith("get_"):
-                if transform_name in batch:
-                    batch[transform_name] = transforms[transform_name](batch[transform_name])
-                    used_transforms.add(transform_name)
-
-        if "get_mix" in transforms:
-            batch["audio_mix"], batch["audio_s1"], batch["audio_s2"] = transforms["get_mix"](
-                **batch
-            )
-
-            if "audio_mix" in transforms:
-                batch["audio_mix"] = transforms["audio_mix"](batch["audio_mix"])
-                used_transforms.add("audio_mix")
-
-        if "audio_s1" in batch and "audio_s2" in batch:
-            batch["audio_concat"] = torch.concat([batch["audio_s1"], batch["audio_s2"]], dim=1).to(
-                self.device
-            )
-
-        if "get_spectrogram" in transforms:
-            batch["spectrogram_mix"] = transforms["get_spectrogram"](batch["audio_mix"])
+        if "spectrogram" not in batch:
+            batch["spectrogram"], _, _, _ = self.acoustic_model.encode_text(batch["text"])
+            batch["spectrogram"] = batch["spectrogram"].squeeze(1).to(self.device)    
 
         for transform_name in transforms.keys():
-            if not transform_name.startswith("get_") and transform_name not in used_transforms:
+            if transform_name in batch:
                 batch[transform_name] = transforms[transform_name](batch[transform_name])
 
         return batch
