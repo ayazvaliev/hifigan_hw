@@ -65,7 +65,7 @@ def main(config):
         model.load_state_dict(sd)
 
         melspec_output, _, _, _ = acoustic_model.encode_text([config.prompt])
-        generated = model(melspec_output).squeeze(0)
+        generated = model(melspec_output.to(device)).squeeze(0)
         torchaudio.save(
             str(Path(config.inferencer.save_path) / "generated.wav"),
             generated,
